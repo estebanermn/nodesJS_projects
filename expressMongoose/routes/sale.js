@@ -5,16 +5,19 @@ const Sale = require('../models/sale')
 const Car = require('../models/car')
 const User = require('../models/user')
 
+const auth = require('../middleware/auth')
+const admin = require('../middleware/admin')    
+
 
 const router = express.Router()
 
 
-router.get('/', async(req, res)=>{
+router.get('/', [auth, admin], async(req, res)=>{
     const sales = await Sale.find()
     res.send(sales)
 })
 
-router.post('/', async(req, res)=>{
+router.post('/', auth, async(req, res)=>{
    
     const user = await User.findById(req.body.userId)
     if(!user) return res.status(400).send('Usuario no existe')

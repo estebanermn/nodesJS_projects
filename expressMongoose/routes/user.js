@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const express = require('express')
 
@@ -29,18 +30,27 @@ router.post('/', [
          return res.status(422).json({ errors: errors.array() });
     } 
 
-    let user = await User.findOne({email: req.body.email})
+    let user = await User.findOne({email: req.body.email}) //
     if(user) return res.status(400).send('Ese usuarioa ya existe')
+
+    const salt = await bcrypt.genSalt(10)
+    const hashPassword = await bcrypt.hash( req.body.password, salt)
 
     user = new User({
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password,
-        isCustomer: false
+        password: hashPassword,
+        isCustomer: false,
+        isAdmin: false,
     })
 
     const result  = await user.save() 
-    res.status(201).send({
+
+    const jwtToken =  user.generateJwt(); // jwt.sign({_id:user._id, name: user.name}, 'password')
+
+
+
+    res.status(201).header('authorization',jwtToken).send({
         _id:user._id,
         name: user.name,
         email: user.email
@@ -62,7 +72,8 @@ router.put('/:id', [
     const user = await User.findByIdAndUpdate(req.params.id, {
         name: req.body.name,
         email: req.body.email,
-        isCustomer: req.body.isCustomer
+        isCustomer: req.body.isCustomer,
+        isAdmin: req.body.isAdmin
     }, {
         new: true
     })

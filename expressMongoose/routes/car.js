@@ -4,10 +4,14 @@ const express = require('express')
 const Car = require('../models/car')
 const {Company} = require('../models/company')
 
+const Role = require('../helpers/role')
+const autorize = require('../middleware/role')
+const auth = require('../middleware/auth')
+
 const router = express.Router()
 const { check, validationResult } = require('express-validator');
 
-router.get('/', async(req, res)=>{
+router.get('/', [auth, autorize([Role.Admin, Role.User])],async(req, res)=>{
     const cars = await Car
         .find()
         //.populate('company', 'name country') //para datos normalizados
